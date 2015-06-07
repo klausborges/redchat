@@ -20,4 +20,7 @@
 /* Prints a colorized debug message on stdout. */
 void printd(char *, char *);
 
+/* Strips newlines from strings. */
+void strip(char *, int);
+
 #endif

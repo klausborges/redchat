@@ -8,30 +8,29 @@ int main(int argc, char **argv) {
 
   /* Spawn client, server and interactive threads */
   printd("Main", "Spawning threads\n");
+
   if (pthread_create(&interactive_thread, NULL, &interactive_unit, NULL)) {
-    fprintf(stderr, "Error creating interactive thread\n");
-    return 1;
+    fprintf(stderr, "Error creating interactive thread");
+    return E_THREAD_NOT_SPAWNED;
   }
 
   if (pthread_create(&server_thread, NULL, &server_unit, NULL)) {
-    fprintf(stderr, "Error creating interactive thread\n");
-    return 2;
+    fprintf(stderr, "Error creating interactive thread");
+    return E_THREAD_NOT_SPAWNED;
   }
 
   if (pthread_create(&client_thread, NULL, &client_unit, NULL)) {
-    fprintf(stderr, "Error creating interactive thread\n");
-    return 3;
+    fprintf(stderr, "Error creating interactive thread");
+    return E_THREAD_NOT_SPAWNED;
   }
 
-  printd("Main", "Waiting for threads to exit\n");
+  printd("Main", "Waiting for threads to exit");
 
   pthread_join(interactive_thread, NULL);
   pthread_join(client_thread, NULL);
   pthread_join(server_thread, NULL);
 
   printd("Main", "Exiting\n");
-
-  printf("%s%d %d", COLOR_RED, DEBUG_COLORS, DEBUG_TIMESTAMP);
 
   return 0;
 }

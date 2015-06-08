@@ -1,9 +1,17 @@
 #include <stdio.h>
 #include "../include/utils.h"
+#include "../include/redchat.h"
 
-void printd(char *unit_name, char *debug_str) {
+void debug(char *color, char *name, char *str) {
   if (DEBUG) {
-    printf("[\e[31m%s\e[0m] %s\e[0m\n", unit_name, debug_str);
+    printf("[%s%s%s] %s\n", color, name, COLOR_RESET, str);
+  }
+}
+
+void debugerr(char *color, char *name, char *str) {
+  if (DEBUG) {
+    printf("[%s%s%s] [%s!%s] %s\n", color, name, COLOR_RESET, COLOR_RED,
+        COLOR_RESET, str);
   }
 }
 

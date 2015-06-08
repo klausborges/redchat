@@ -3,7 +3,6 @@
 #include <string.h>
 #include <pthread.h>
 #include "../include/redchat.h"
-#include "../include/units.h"
 #include "../include/utils.h"
 
 static int read_line(char *buffer, size_t size) {
@@ -58,6 +57,11 @@ static int queue_message() {
 
   printf("\n @%s %s\n", target, msg);
 
+  /* Queue message */
+  send_queue[n_queued_msgs] = msg;
+  n_queued_msgs++;
+  sem_post(&queued_msgs);
+
   free(buffer);
 
   return 0;
@@ -68,14 +72,14 @@ void *interactive_unit() {
   char option = '\0';
   int rc;
 
-  printd("Interactive", "Waiting on barrier for all threads to load");
-  rc = pthread_barrier_wait(&barr_all_done);
+  debug(COLOR_GREEN, "Interactive", "Waiting on barrier for all threads to load");
+  rc = pthread_barrier_wait(&all_done);
   if (rc && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
     fprintf(stderr, "Error waiting on barrier\n");
     return (void *) E_CANT_WAIT_ON_BARRIER;
   }
 
-  printd("Interactive", "Starting");
+  debug(COLOR_GREEN, "Interactive", "Starting");
 
   buffer = malloc(MAX_OPTION_SIZE * sizeof(char));
   if (!buffer) {
@@ -101,8 +105,7 @@ void *interactive_unit() {
       }
       else if (option == '4') {
         queue_message();
-        sem_post(&queued_msgs);
-        printf("\nMessage sent\n\n");
+        debug(COLOR_GREEN, "Interactive", "Message queued");
       }
       else if (option == '5') {
         printf("\nMessages read\n\n");
@@ -118,65 +121,17 @@ void *interactive_unit() {
 
   free(buffer);
 
-  printd("Interactive", "Waiting on barrier");
-  rc = pthread_barrier_wait(&barr_all_done);
+  /* MUTEX HERE */
+  is_executing = 0;
+  sem_post(&queued_msgs);
+
+  debug(COLOR_GREEN, "Interactive", "Waiting on barrier");
+  rc = pthread_barrier_wait(&all_done);
   if (rc && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
     fprintf(stderr, "Error waiting on barrier\n");
     return (void *) E_CANT_WAIT_ON_BARRIER;
   }
 
-  printd("Interactive", "Exiting");
-  return OK;
-}
-
-void *client_unit() {
-  int rc;
-
-  printd("Client", "Waiting on barrier for all threads to load");
-  rc = pthread_barrier_wait(&barr_all_done);
-  if (rc && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-    fprintf(stderr, "Error waiting on barrier\n");
-    return (void *) E_CANT_WAIT_ON_BARRIER;
-  }
-
-  printd("Client", "Starting");
-
-  while (is_executing) {
-    sem_wait(&queued_msgs);
-    printd("Client", "Processing message");
-    printd("Client", "Message sent");
-  }
-
-  printd("Client", "Waiting on barrier");
-  rc = pthread_barrier_wait(&barr_all_done);
-  if (rc && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-    fprintf(stderr, "Error waiting on barrier\n");
-    return (void *) E_CANT_WAIT_ON_BARRIER;
-  }
-
-  printd("Client", "Exiting");
-  return OK;
-}
-
-void *server_unit() {
-  int rc;
-
-  printd("Server", "Waiting on barrier for all threads to load");
-  rc = pthread_barrier_wait(&barr_all_done);
-  if (rc && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-    fprintf(stderr, "Error waiting on barrier\n");
-    return (void *) E_CANT_WAIT_ON_BARRIER;
-  }
-
-  printd("Server", "Starting");
-
-  printd("Server", "Waiting on barrier");
-  rc = pthread_barrier_wait(&barr_all_done);
-  if (rc && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-    fprintf(stderr, "Error waiting on barrier\n");
-    return (void *) E_CANT_WAIT_ON_BARRIER;
-  }
-
-  printd("Server", "Exiting");
+  debug(COLOR_GREEN, "Interactive", "Exiting");
   return OK;
 }

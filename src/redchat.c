@@ -2,14 +2,19 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include "../include/redchat.h"
-#include "../include/units.h"
+#include "../include/server.h"
+#include "../include/client.h"
+#include "../include/interact.h"
 #include "../include/utils.h"
 
-pthread_barrier_t barr_all_done;
+pthread_barrier_t all_done;
 
 sem_t queued_msgs;
 
+char *send_queue[MAX_QUEUED_MSGS];
+
 int is_executing;
+int n_queued_msgs;
 
 int main(int argc, char **argv) {
   pthread_t interactive_thread, client_thread, server_thread;
@@ -18,14 +23,14 @@ int main(int argc, char **argv) {
   is_executing = 1;
 
   /* Initialize barrier */
-  printd("Main", "Initializing barrier");
-  if (pthread_barrier_init(&barr_all_done, NULL, NUM_UNITS)) {
+  debug(COLOR_BLUE, "Main", "Initializing barrier");
+  if (pthread_barrier_init(&all_done, NULL, NUM_UNITS)) {
     return E_CANT_CREATE_BARRIER;
   }
-  printd("Main", "Barrier initialized");
+  debug(COLOR_BLUE, "Main", "Barrier initialized");
 
   /* Initialize send message queue */
-  char *queue[MAX_QUEUED_MSGS];
+  n_queued_msgs = 0;
 
   /* Initialize send queue semaphore */
   if (sem_init(&queued_msgs, 0, 0)) {
@@ -34,7 +39,7 @@ int main(int argc, char **argv) {
   }
 
   /* Spawn client, server and interactive threads */
-  printd("Main", "Spawning threads\n");
+  debug(COLOR_BLUE, "Main", "Spawning threads\n");
 
   if (pthread_create(&interactive_thread, NULL, &interactive_unit, NULL)) {
     fprintf(stderr, "Error creating interactive thread");
@@ -51,14 +56,14 @@ int main(int argc, char **argv) {
     return E_CANT_SPAWN_THREAD;
   }
 
-  printd("Main", "Waiting for threads to exit");
+  debug(COLOR_BLUE, "Main", "Waiting for threads to exit");
 
   pthread_join(interactive_thread, NULL);
   pthread_join(client_thread, NULL);
   pthread_join(server_thread, NULL);
 
-  printd("Main", "Exiting\n");
+  debug(COLOR_BLUE, "Main", "Exiting\n");
   sem_destroy(&queued_msgs);
 
-  return 0;
+  return OK;
 }

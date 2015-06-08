@@ -1,13 +1,11 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+/* Boolean value macros. */
 #define TRUE  1
 #define FALSE 0
 
-#define DEBUG           TRUE
-#define DEBUG_TIMESTAMP FALSE
-#define DEBUG_COLORS    TRUE
-
+/* Bash color formatting codes. */
 #define COLOR_BLACK   "\e[30m"
 #define COLOR_RED     "\e[31m"
 #define COLOR_GREEN   "\e[32m"
@@ -18,7 +16,10 @@
 #define COLOR_RESET   "\e[39m"
 
 /* Prints a colorized debug message on stdout. */
-void printd(char *, char *);
+void debug(char *, char *, char *);
+
+/* Prints a colorized debug error message on stdout. */
+void debugerr(char *, char *, char *);
 
 /* Strips newlines from strings. */
 void strip(char *, int);

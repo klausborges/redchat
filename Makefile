@@ -10,15 +10,21 @@ all: redchat
 redchat.o:
 	$(CC) $(CFLAGS) -c $(SRC)/redchat.c -o $(OBJ)/redchat.o
 
-units.o:
-	$(CC) $(CFLAGS) -c $(SRC)/units.c -o $(OBJ)/units.o
+client.o:
+	$(CC) $(CFLAGS) -c $(SRC)/client.c -o $(OBJ)/client.o
+
+server.o:
+	$(CC) $(CFLAGS) -c $(SRC)/server.c -o $(OBJ)/server.o
+
+interact.o:
+	$(CC) $(CFLAGS) -c $(SRC)/interact.c -o $(OBJ)/interact.o
 
 utils.o:
 	$(CC) $(CFLAGS) -c $(SRC)/utils.c -o $(OBJ)/utils.o
 
-redchat: units.o utils.o redchat.o
-	$(CC) $(CFLAGS) $(OBJ)/units.o $(OBJ)/utils.o $(OBJ)/redchat.o \
-		-o $(BIN)/redchat
+redchat: interact.o client.o server.o utils.o redchat.o
+	$(CC) $(CFLAGS) $(OBJ)/interact.o $(OBJ)/client.o $(OBJ)/server.o \
+		$(OBJ)/utils.o $(OBJ)/redchat.o -o $(BIN)/redchat
 
 clean:
 	rm -vf $(OBJ)/*.o

@@ -63,6 +63,7 @@ void *server_unit() {
     /* Blocking accept waits for connection attempts */
     connection = accept(sock_server, (struct sockaddr *) &client_addr,
         (socklen_t *) &sin_size);
+    printf("Connection attempted\n");
   }
 
   /* Waits on barrier for all units to exit together */

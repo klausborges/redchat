@@ -17,7 +17,7 @@
 
 /* Dispatches queued messages to their recipients. */
 static int dispatch_message(struct message *msg) {
-  struct sockaddr_in saddr;
+  struct sockaddr_in server_addr;
   struct hostent *host;
   int sock_client;
 
@@ -28,16 +28,16 @@ static int dispatch_message(struct message *msg) {
     return E_CANT_CREATE_SOCKET;
   }
 
-  saddr.sin_family = AF_INET;
-  saddr.sin_port = DEFAULT_SERVER_PORT;
-  saddr.sin_addr = *((struct in_addr *)host->h_addr);
-  bzero(&(saddr.sin_zero), 8);
+  server_addr.sin_family = AF_INET;
+  server_addr.sin_port = DEFAULT_SERVER_PORT;
+  server_addr.sin_addr = *((struct in_addr *)host->h_addr);
+  bzero(&(server_addr.sin_zero), 8);
   /* TODO: is this better?
-   * inet_pton(AF_INET, "ip_address", &(saddr.sin_addr)); */
+   * inet_pton(AF_INET, "ip_address", &(server_addr.sin_addr)); */
 
   /* Attempts a connection to destination server unit */
-  if (connect(sock_client, (struct sockaddr *) &saddr, sizeof(struct sockaddr))
-      == -1) {
+  if (connect(sock_client, (struct sockaddr *) &server_addr,
+        sizeof(struct sockaddr)) == -1) {
     return E_DEST_SERVER_OFFLINE;
   }
 

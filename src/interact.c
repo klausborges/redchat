@@ -5,6 +5,11 @@
 #include "../include/redchat.h"
 #include "../include/utils.h"
 
+
+
+/* Internal functions for the interactive unit. */
+
+/* Prints the menu. */
 static void print_menu() {
   printf("1. Add contact IP\n");
   printf("2. List contacts\n");
@@ -15,6 +20,9 @@ static void print_menu() {
   printf("Option> ");
 }
 
+
+
+/* Prints the contact list with padding and alignment. */
 static void print_contacts() {
   int i;
 
@@ -32,28 +40,30 @@ static void print_contacts() {
   }
 }
 
+
+
+/* Adds a contact to the contact list, reading an address and an alias. */
 static int add_contact() {
   if (n_contacts == MAX_N_CONTACTS) {
     printf("\n  Contact list is full!\n\n");
     return E_CONTACT_LIST_FULL;
   }
   else {
-    printf("Adding contact");
     char *buffer = NULL;
     struct contact *new_contact = NULL;
 
+    /* Allocates memory for buffer and contact struct */
     buffer = (char *) malloc(MAX_ADDRESS_SIZE * sizeof(char));
     if (!buffer) {
-      debugerr(COLOR_GREEN, "Interactive", "Error allocating memory for add_contact buffer\n");
       return E_CANT_ALLOC_BUFFER;
     }
 
     new_contact = (struct contact *) malloc(sizeof(struct contact));
     if (!new_contact) {
-      debugerr(COLOR_GREEN, "Interactive", "Couldn't allocate memory for contact struct");
       return E_CANT_ALLOC_CONTACT;
     }
 
+    /* Reads input and strips newlines */
     printf("\n     IP: ");
     read_line(buffer, MAX_ADDRESS_SIZE);
     strip(buffer, MAX_ADDRESS_SIZE);
@@ -64,12 +74,14 @@ static int add_contact() {
     strip(buffer, MAX_NAME_SIZE);
     new_contact->alias = strndup(buffer, MAX_NAME_SIZE-1);
 
+    /* Assigns contact online/offline status to unknown */
     new_contact->status = STATUS_UNKNOWN;
 
-    /* Adds new contact to the end of the linked list */
+    /* Adds new contact to the end of the list */
     contacts[n_contacts] = new_contact;
     n_contacts++;
 
+    /* Frees allocated resources */
     free(buffer);
 
     printf("\n");
@@ -77,66 +89,73 @@ static int add_contact() {
   }
 }
 
+
+
+/* Reads a message and its destination and queues it to be handled by the
+ * client unit. */
 static int queue_message() {
   char *buffer = NULL;
   struct message *msg = NULL;
 
+  /* Allocates memory for buffer and message struct */
   buffer = (char *) malloc(MAX_BUFFER_SIZE * sizeof(char));
   if (!buffer) {
-    debugerr(COLOR_GREEN, "Interactive", "Error allocating memory for send_message buffer\n");
     return E_CANT_ALLOC_BUFFER;
   }
 
   msg = (struct message *) malloc(sizeof(struct message));
   if (!msg) {
-    debugerr(COLOR_GREEN, "Interactive", "Couldn't allocate memory for message struct");
     return E_CANT_ALLOC_MESSAGE;
   }
 
-  printf("\nTarget: ");
+  /* Reads input and strips newlines */
+  printf("\n   Target: ");
   read_line(buffer, MAX_NAME_SIZE);
   strip(buffer, MAX_NAME_SIZE);
   msg->address = strndup(buffer, MAX_NAME_SIZE-1);
 
-  printf("Message: ");
+  printf("  Message: ");
   read_line(buffer, MAX_MESSAGE_SIZE);
   strip(buffer, MAX_MESSAGE_SIZE);
   msg->text = strndup(buffer, MAX_MESSAGE_SIZE-1);
 
-
-  printf("\n @%s %s\n", msg->address, msg->text);
-
-  /* Queue message */
-  /* TODO: mutex */
+  /* Queues message and signals the client thread */
   send_queue[n_queued_msgs] = msg;
   n_queued_msgs++;
   sem_post(&queued_msgs);
 
+  /* Frees allocated resources */
   free(buffer);
 
-  return 0;
+  return OK;
 }
 
+
+
+/* Interactive unit thread function. */
 void *interactive_unit() {
   char *buffer = NULL;
   char option = '\0';
   int rc;
 
-  debug(COLOR_GREEN, "Interactive", "Waiting on barrier for all threads to load");
+  /* Waits on barrier for other units to load */
+  debug(COLOR_GREEN, "Interactive", "Waiting on barrier for units to load");
   rc = pthread_barrier_wait(&all_done);
   if (rc && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-    fprintf(stderr, "Error waiting on barrier\n");
-    return (void *) E_CANT_WAIT_ON_BARRIER;
+    debugerr(COLOR_GREEN, "Interactive", "Error waiting on barrier");
+    pthread_exit((void *) E_CANT_WAIT_ON_BARRIER);
   }
 
   debug(COLOR_GREEN, "Interactive", "Starting");
 
+  /* Allocates memory for user input buffer */
   buffer = malloc(MAX_OPTION_SIZE * sizeof(char));
   if (!buffer) {
-    fprintf(stderr, "Error allocating memory for interactive_unit() buffer\n");
-    return (void *) E_CANT_ALLOC_BUFFER;
+    debugerr(COLOR_GREEN, "Interactive", "Error allocating buffer");
+    pthread_exit((void *) E_CANT_ALLOC_BUFFER);
   }
 
+  /* Menu loop */
   while (option != '6') {
     print_menu();
 
@@ -145,7 +164,17 @@ void *interactive_unit() {
 
     if (rc == OK) {
       if (option == '1') {
-        add_contact();
+        rc = add_contact();
+        if (rc == OK) {
+          debug(COLOR_GREEN, "Interactive", "Contact added");
+        }
+        else if (rc == E_CANT_ALLOC_BUFFER) {
+          debugerr(COLOR_GREEN, "Interactive", "Couldn't alloc contact buffer");
+          pthread_exit((void *) E_CANT_ALLOC_BUFFER);
+        } else if (rc == E_CANT_ALLOC_CONTACT) {
+          debugerr(COLOR_GREEN, "Interactive", "Couldn't alloc contact struct");
+          pthread_exit((void *) E_CANT_ALLOC_CONTACT);
+        }
       }
       else if (option == '2') {
         print_contacts();
@@ -154,13 +183,24 @@ void *interactive_unit() {
         printf("\nContact removed\n\n");
       }
       else if (option == '4') {
-        queue_message();
+        rc = queue_message();
+        if (rc == OK) {
+          debug(COLOR_GREEN, "Interactive", "Message queued");
+        }
+        else if (rc == E_CANT_ALLOC_BUFFER) {
+          debugerr(COLOR_GREEN, "Interactive", "Couldn't alloc message buffer");
+          pthread_exit((void *) E_CANT_ALLOC_BUFFER);
+        }
+        else if (rc == E_CANT_ALLOC_MESSAGE) {
+          debugerr(COLOR_GREEN, "Interactive", "Couldn't alloc message struct");
+          pthread_exit((void *) E_CANT_ALLOC_MESSAGE);
+        }
       }
       else if (option == '5') {
         printf("\nMessages read\n\n");
       }
       else if (option == '6') {
-        printf("\nBye!\n\n");
+        printf("\n  Bye!\n\n");
       }
       else {
         printf("Invalid option\n\n");
@@ -168,16 +208,19 @@ void *interactive_unit() {
     }
   }
 
+  /* Frees allocated resources */
+  debug(COLOR_GREEN, "Interactive", "Freeing resources");
   free(buffer);
 
-  /* MUTEX HERE */
+  /* TODO: mutual exclusion on global variable */
   is_executing = 0;
   sem_post(&queued_msgs);
 
-  debug(COLOR_GREEN, "Interactive", "Waiting on barrier");
+  /* Waits on barrier for all units to exit together */
+  debug(COLOR_GREEN, "Interactive", "Waiting on barrier for units to exit");
   rc = pthread_barrier_wait(&all_done);
   if (rc && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-    fprintf(stderr, "Error waiting on barrier\n");
+    debugerr(COLOR_GREEN, "Interactive", "Error waiting on barrier");
     pthread_exit((void *) E_CANT_WAIT_ON_BARRIER);
   }
 

@@ -9,13 +9,10 @@
 #include "../include/utils.h"
 
 pthread_barrier_t all_done;
-
 sem_t queued_msgs;
 
 struct message *send_queue[MAX_QUEUED_MSGS];
-
 struct message *messages[MAX_STORED_MSGS];
-
 struct contact *contacts[MAX_N_CONTACTS];
 
 int is_executing;
@@ -28,7 +25,10 @@ int main(int argc, char **argv) {
   void *rs = NULL;
   pthread_t interactive_thread, client_thread, server_thread;
 
-  /* Set control variables */
+  /* Initialize control variables */
+  n_queued_msgs = 0;
+  n_msgs = 0;
+  n_contacts = 0;
   is_executing = 1;
 
   /* Initialize barrier */
@@ -37,11 +37,6 @@ int main(int argc, char **argv) {
     return E_CANT_CREATE_BARRIER;
   }
   debug(COLOR_BLUE, "Main", "Barrier initialized");
-
-  /* Initialize control variables */
-  n_queued_msgs = 0;
-  n_msgs = 0;
-  n_contacts = 0;
 
   /* Initialize send queue semaphore */
   if (sem_init(&queued_msgs, 0, 0)) {
@@ -67,8 +62,9 @@ int main(int argc, char **argv) {
     return E_CANT_SPAWN_THREAD;
   }
 
+  /* Joins all threads and checks for errors */
+  /* TODO: proper return code handling */
   debug(COLOR_BLUE, "Main", "Waiting for threads to exit");
-
   rc = pthread_join(interactive_thread, rs);
   if (rc) {
     debugerr(COLOR_BLUE, "Main", "Error from pthread_join interactive thread");
@@ -96,9 +92,10 @@ int main(int argc, char **argv) {
     debug(COLOR_BLUE, "Main", "Server thread joined");
   }
 
+  /* Frees allocated resources and exits */
   debug(COLOR_BLUE, "Main", "Exiting\n");
   sem_destroy(&queued_msgs);
   pthread_barrier_destroy(&all_done);
 
-  return OK;
+  return EXIT_SUCCESS;
 }

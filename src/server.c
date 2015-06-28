@@ -7,6 +7,9 @@
 #include "../include/redchat.h"
 #include "../include/utils.h"
 
+
+
+/* Server unit thread main function. */
 void *server_unit() {
   int rc;
   int true_int = 1;
@@ -19,6 +22,7 @@ void *server_unit() {
     pthread_exit((void *) E_CANT_CREATE_SERVER_SOCKET);
   }
 
+  /* Sets up the server socket */
   if (setsockopt(sock_server, SOL_SOCKET, SO_REUSEADDR, &true_int,
       sizeof(int)) == -1) {
     debugerr(COLOR_YELLOW, "Server", "Couldn't set socket options");
@@ -41,28 +45,32 @@ void *server_unit() {
     pthread_exit((void *) E_CANT_LISTEN_SERVER_SOCKET);
   }
 
-  /* Waits for all other threads to load */
-  debug(COLOR_YELLOW, "Server", "Waiting on barrier for all threads to load");
+  /* Waits on barrier for other units to load */
+  debug(COLOR_YELLOW, "Server", "Waiting on barrier for units to load");
   rc = pthread_barrier_wait(&all_done);
   if (rc && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-    fprintf(stderr, "Error waiting on barrier\n");
-    return (void *) E_CANT_WAIT_ON_BARRIER;
+    debugerr(COLOR_YELLOW, "Server", "Error waiting on barrier");
+    pthread_exit((void *) E_CANT_WAIT_ON_BARRIER);
   }
 
   debug(COLOR_YELLOW, "Server", "Starting");
-  debug(COLOR_YELLOW, "Server", "Waiting for connections");
 
+  /* Execution loop, stays on it until an exit signal is signaled by
+   * the interactive unit */
   while (is_executing) {
+    debug(COLOR_YELLOW, "Server", "Waiting for connections");
+
+    /* Blocking accept waits for connection attempts */
     connection = accept(sock_server, (struct sockaddr *) &client_addr,
         (socklen_t *) &sin_size);
-    printf("Connection accepted!!");
   }
 
-  debug(COLOR_YELLOW, "Server", "Waiting on barrier");
+  /* Waits on barrier for all units to exit together */
+  debug(COLOR_YELLOW, "Server", "Waiting on barrier for units to exit");
   rc = pthread_barrier_wait(&all_done);
   if (rc && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-    fprintf(stderr, "Error waiting on barrier\n");
-    return (void *) E_CANT_WAIT_ON_BARRIER;
+    debugerr(COLOR_YELLOW, "Server", "Error waiting on barrier");
+    pthread_exit((void *) E_CANT_WAIT_ON_BARRIER);
   }
 
   debug(COLOR_YELLOW, "Server", "Exiting");

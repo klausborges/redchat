@@ -3,6 +3,8 @@
 #include "../include/utils.h"
 #include "../include/redchat.h"
 
+
+
 int read_line(char *buffer, size_t size) {
   char c;
   int extra = 0;
@@ -22,11 +24,15 @@ int read_line(char *buffer, size_t size) {
   return OK;
 }
 
+
+
 void debug(char *color, char *name, char *str) {
   if (DEBUG) {
     printf("[%s%s%s] %s\n", color, name, COLOR_RESET, str);
   }
 }
+
+
 
 void debugerr(char *color, char *name, char *str) {
   if (DEBUG) {
@@ -34,6 +40,8 @@ void debugerr(char *color, char *name, char *str) {
         COLOR_RESET, str);
   }
 }
+
+
 
 void strip(char *str, int len) {
   int i;

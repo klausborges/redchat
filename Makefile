@@ -5,7 +5,11 @@ INC=include
 OBJ=obj
 SRC=src
 
-all: redchat
+all: make_dirs redchat
+
+make_dirs:
+	mkdir -p obj
+	mkdir -p bin
 
 redchat.o:
 	$(CC) $(CFLAGS) -c $(SRC)/redchat.c -o $(OBJ)/redchat.o

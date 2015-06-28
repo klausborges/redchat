@@ -11,15 +11,20 @@
 #include "../include/client.h"
 #include "../include/utils.h"
 
+
+
+/* Internal functions for the client unit. */
+
+/* Dispatches queued messages to their recipients. */
 static int dispatch_message(struct message *msg) {
   struct sockaddr_in saddr;
   struct hostent *host;
   int sock_client;
 
+  /* Sets up the socket */
   host = gethostbyname(msg->address);
 
   if ((sock_client = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-    fprintf(stderr, "Error creating socket\n");
     return E_CANT_CREATE_SOCKET;
   }
 
@@ -28,64 +33,78 @@ static int dispatch_message(struct message *msg) {
   saddr.sin_addr = *((struct in_addr *)host->h_addr);
   bzero(&(saddr.sin_zero), 8);
   /* TODO: is this better?
-   * inet_pton(AF_INET, "127.0.0.1", &(saddr.sin_addr)); */
+   * inet_pton(AF_INET, "ip_address", &(saddr.sin_addr)); */
 
-  /* Attempts a connection to destination server thread. */
+  /* Attempts a connection to destination server unit */
   if (connect(sock_client, (struct sockaddr *) &saddr, sizeof(struct sockaddr))
       == -1) {
-    /* TODO: Insert message here? */
-    debugerr(COLOR_RED, "Client", "Destination server offline");
     return E_DEST_SERVER_OFFLINE;
   }
-
-  printf("Message %s dispatched to %s\n", msg->text, msg->address);
 }
 
+
+
+/* Client unit thread main function. */
 void *client_unit() {
   int rc;
   struct message *deliver = NULL;
 
-  debug(COLOR_RED, "Client", "Waiting on barrier for all threads to load");
+  /* Waits on barrier for other units to load */
+  debug(COLOR_RED, "Client", "Waiting on barrier for units to load");
   rc = pthread_barrier_wait(&all_done);
   if (rc && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-    fprintf(stderr, "Error waiting on barrier\n");
+    debugerr(COLOR_RED, "Client", "Error waiting on barrier");
     pthread_exit((void *) E_CANT_WAIT_ON_BARRIER);
   }
 
   debug(COLOR_RED, "Client", "Starting");
 
+  /* Execution loop, stays on it until an exit signal is signaled by
+   * the interactive unit */
   while (is_executing) {
+    /* Waits on semaphore for queued messages */
     debug(COLOR_RED, "Client", "Waiting for message to dispatch");
     sem_wait(&queued_msgs);
+
     if (n_queued_msgs > 0 && is_executing) {
-      debug(COLOR_RED, "Client", "Processing message");
+      /* Attempts to deliver the message */
+      debug(COLOR_RED, "Client", "Attempting to dispatch message");
 
       deliver = send_queue[n_queued_msgs-1];
-      printf("Sending message (%s) to (%s)\n", deliver->text,
-          deliver->address);
-      dispatch_message(deliver);
+      rc = dispatch_message(deliver);
+      if (rc == OK) {
+        debug(COLOR_RED, "Client", "Message dispatched");
+      }
+      else if (rc == E_CANT_CREATE_SOCKET) {
+        debugerr(COLOR_RED, "Client", "Couldn't create socket");
+        pthread_exit((void *) E_CANT_CREATE_SOCKET);
+      }
+      else if (rc == E_DEST_SERVER_OFFLINE) {
+        debugerr(COLOR_RED, "Client", "Destination server not found");
+        /* TODO: Mark contact as offline, remove contact, retry sending msg? */
+      }
 
+      /* Frees dispatched message resources */
       free(deliver->address);
       free(deliver->text);
       free(deliver);
       n_queued_msgs--;
-
-      debug(COLOR_RED, "Client", "Message sent");
     }
     else if (!is_executing) {
       debug(COLOR_RED, "Client", "Received termination signal");
-      /* Free queued messages */
+      /* TODO: Free queued messages and exit? */
     }
     else {
-      fprintf(stderr, "Post on queued_msgs semaphore without queued messages");
+      debugerr(COLOR_RED, "Client", "Post on semaphore with empty queue");
       pthread_exit((void *) E_POST_WITH_EMPTY_QUEUE);
     }
   }
 
-  debug(COLOR_RED, "Client", "Waiting on barrier for all threads to finish");
+  /* Waits on barrier for all units to exit together */
+  debug(COLOR_RED, "Client", "Waiting on barrier for units to exit");
   rc = pthread_barrier_wait(&all_done);
   if (rc && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-    debugerr(COLOR_RED, "Client", "Can't wait on barrier");
+    debugerr(COLOR_RED, "Client", "Error waiting on barrier");
     pthread_exit((void *) E_CANT_WAIT_ON_BARRIER);
   }
 

@@ -40,6 +40,8 @@ static int dispatch_message(struct message *msg) {
       == -1) {
     return E_DEST_SERVER_OFFLINE;
   }
+
+  return OK;
 }
 
 

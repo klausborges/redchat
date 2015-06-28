@@ -15,6 +15,10 @@
 #define COLOR_CYAN    "\e[36m"
 #define COLOR_RESET   "\e[39m"
 
+/* Reads a line from stdin, returning whether the input fits the buffer size
+ * or if its too long. Strips trailing newline character if it exists. */
+int read_line(char *, size_t);
+
 /* Prints a colorized debug message on stdout. */
 void debug(char *, char *, char *);
 

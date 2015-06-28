@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include "../include/redchat.h"
@@ -11,12 +12,20 @@ pthread_barrier_t all_done;
 
 sem_t queued_msgs;
 
-char *send_queue[MAX_QUEUED_MSGS];
+struct message *send_queue[MAX_QUEUED_MSGS];
+
+struct message *messages[MAX_STORED_MSGS];
+
+struct contact *contacts[MAX_N_CONTACTS];
 
 int is_executing;
 int n_queued_msgs;
+int n_contacts;
+int n_msgs;
 
 int main(int argc, char **argv) {
+  int rc;
+  void *rs = NULL;
   pthread_t interactive_thread, client_thread, server_thread;
 
   /* Set control variables */
@@ -29,8 +38,10 @@ int main(int argc, char **argv) {
   }
   debug(COLOR_BLUE, "Main", "Barrier initialized");
 
-  /* Initialize send message queue */
+  /* Initialize control variables */
   n_queued_msgs = 0;
+  n_msgs = 0;
+  n_contacts = 0;
 
   /* Initialize send queue semaphore */
   if (sem_init(&queued_msgs, 0, 0)) {
@@ -39,7 +50,7 @@ int main(int argc, char **argv) {
   }
 
   /* Spawn client, server and interactive threads */
-  debug(COLOR_BLUE, "Main", "Spawning threads\n");
+  debug(COLOR_BLUE, "Main", "Spawning threads");
 
   if (pthread_create(&interactive_thread, NULL, &interactive_unit, NULL)) {
     fprintf(stderr, "Error creating interactive thread");
@@ -58,12 +69,36 @@ int main(int argc, char **argv) {
 
   debug(COLOR_BLUE, "Main", "Waiting for threads to exit");
 
-  pthread_join(interactive_thread, NULL);
-  pthread_join(client_thread, NULL);
-  pthread_join(server_thread, NULL);
+  rc = pthread_join(interactive_thread, rs);
+  if (rc) {
+    debugerr(COLOR_BLUE, "Main", "Error from pthread_join interactive thread");
+    return E_COULDNT_JOIN_THREAD;
+  }
+  else {
+    debug(COLOR_BLUE, "Main", "Interactive thread joined");
+  }
+
+  rc = pthread_join(client_thread, rs);
+  if (rc) {
+    debugerr(COLOR_BLUE, "Main", "Error from pthread_join client thread");
+    return E_COULDNT_JOIN_THREAD;
+  }
+  else {
+    debug(COLOR_BLUE, "Main", "Client thread joined");
+  }
+
+  rc = pthread_join(server_thread, rs);
+  if (rc) {
+    debugerr(COLOR_BLUE, "Main", "Error from pthread_join server thread");
+    return E_COULDNT_JOIN_THREAD;
+  }
+  else {
+    debug(COLOR_BLUE, "Main", "Server thread joined");
+  }
 
   debug(COLOR_BLUE, "Main", "Exiting\n");
   sem_destroy(&queued_msgs);
+  pthread_barrier_destroy(&all_done);
 
   return OK;
 }

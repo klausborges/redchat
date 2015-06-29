@@ -115,7 +115,7 @@ static int queue_message() {
   printf("\n   Target: ");
   read_line(buffer, MAX_NAME_SIZE);
   strip(buffer, MAX_NAME_SIZE);
-  msg->address = strndup(buffer, MAX_NAME_SIZE-1);
+  msg->dest_addr = strndup(buffer, MAX_NAME_SIZE-1);
 
   printf("  Message: ");
   read_line(buffer, MAX_MESSAGE_SIZE);
@@ -125,7 +125,6 @@ static int queue_message() {
   /* Sets send time and read status of the message */
   msg->time_sent = time(NULL);
   msg->read = FALSE;
-
 
   /* Queues message and signals the client thread */
   send_queue[n_queued_msgs] = msg;
@@ -184,7 +183,7 @@ static void print_all_messages() {
       strftime(buffer, 10, "%T", time_received);
       printf("  %*s %*s %s\n",
           MAX_TIME_SIZE, buffer,
-          MAX_NAME_SIZE, messages[i]->address,
+          MAX_NAME_SIZE, messages[i]->src_addr,
           messages[i]->text);
 
       /* Marks message as read */
@@ -219,7 +218,7 @@ static void print_unread_messages() {
         strftime(buffer, 10, "%T", time_received);
         printf("  %*s %*s %s\n",
             MAX_TIME_SIZE, buffer,
-            MAX_NAME_SIZE, messages[i]->address,
+            MAX_NAME_SIZE, messages[i]->src_addr,
             messages[i]->text);
 
         /* Marks message as read */

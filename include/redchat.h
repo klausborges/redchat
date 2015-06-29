@@ -75,7 +75,8 @@ struct message {
   time_t time_sent;
   time_t time_received;
   short read;
-  char *address;
+  char *src_addr;
+  char *dest_addr;
   char *text;
 };
 

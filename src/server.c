@@ -33,11 +33,12 @@ static int store_message(struct message *received_msg) {
 
 /* Server unit thread main function. */
 void *server_unit() {
-  int rc;
+  int rc, bytes_recv;
   int true_int = 1;
-  int sock_server;
+  int sock_server, connection;
   int sin_size = sizeof(struct sockaddr_in);
   struct sockaddr_in server_addr, client_addr;
+  struct message *received_msg = NULL;
 
   /* Starts listening for connections on default port */
   if ((sock_server = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -77,7 +78,7 @@ void *server_unit() {
   faux = (struct message *) malloc(sizeof(struct message));
   faux->time_sent = time(NULL);
   faux->read = 0;
-  faux->address = strndup("1.2.3.4", MAX_ADDRESS_SIZE);
+  faux->src_addr = strndup("1.2.3.4", MAX_ADDRESS_SIZE);
   faux->text = strndup("Welcome to redchat!", MAX_MESSAGE_SIZE);
   store_message(faux);
 
@@ -99,9 +100,12 @@ void *server_unit() {
     /* Blocking accept waits for connection attempts */
     /* TODO: assign to connection */
     fflush(stdout);
-    accept(sock_server, (struct sockaddr *) &client_addr,
+    connection = accept(sock_server, (struct sockaddr *) &client_addr,
         (socklen_t *) &sin_size);
     printf("Client connected %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+    bytes_recv = recv(connection, received_msg, sizeof(struct message),
+        0);
+    store_message(received_msg);
   }
 
   /* Waits on barrier for all units to exit together */

@@ -21,12 +21,11 @@ static int dispatch_message(struct message *msg) {
   int rc;
   struct sockaddr_in server_addr;
   struct hostent *host;
-  struct message *recv_data;
   int sock_client;
 
   /* Sets up the socket */
-  printf("Sending message to (%s)\n", msg->address);
-  host = gethostbyname(msg->address);
+  printf("Sending message to (%s)\n", msg->dest_addr);
+  host = gethostbyname(msg->dest_addr);
 
   if ((sock_client = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
     return E_CANT_CREATE_SOCKET;
@@ -45,8 +44,8 @@ static int dispatch_message(struct message *msg) {
     return E_DEST_SERVER_OFFLINE;
   }
 
-  /* Attempts to receive first packet */
-  recv(sock_client, (void *) &recv_data, sizeof(recv_data), 0);
+  /* Sends the message */
+  send(sock_client, msg, sizeof(struct message), 0);
 
   return OK;
 }
@@ -94,7 +93,7 @@ void *client_unit() {
       }
 
       /* Frees dispatched message resources */
-      free(deliver->address);
+      free(deliver->dest_addr);
       free(deliver->text);
       free(deliver);
       n_queued_msgs--;

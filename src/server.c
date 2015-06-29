@@ -29,9 +29,8 @@ static int store_message(struct message *received_msg) {
 
   stored_msg->time_sent = received_msg->time_sent;
   stored_msg->time_received = time(NULL);
-  stored_msg->read = received_msg->read;
-  stored_msg->src_addr = strndup(received_msg->src_addr, MAX_ADDRESS_SIZE);
-  stored_msg->dest_addr = strndup(received_msg->dest_addr, MAX_ADDRESS_SIZE);
+  stored_msg->read = FALSE;
+  stored_msg->src_addr = strndup(received_msg->dest_addr, MAX_ADDRESS_SIZE);
   stored_msg->text = strndup(received_msg->text, MAX_MESSAGE_SIZE);
 
   /* Updates message with the time it was received and stores it */
@@ -91,7 +90,7 @@ void *server_unit() {
   faux = (struct message *) malloc(sizeof(struct message));
   faux->time_sent = time(NULL);
   faux->read = 0;
-  faux->src_addr = strndup("1.2.3.4", MAX_ADDRESS_SIZE);
+  faux->dest_addr = strndup("1.2.3.4", MAX_ADDRESS_SIZE);
   faux->text = strndup("Welcome to redchat!", MAX_MESSAGE_SIZE);
   store_message(faux);
 

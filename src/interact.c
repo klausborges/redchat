@@ -124,7 +124,6 @@ static int queue_message() {
 
   /* Sets send time and read status of the message */
   msg->time_sent = time(NULL);
-  msg->read = FALSE;
 
   /* Queues message and signals the client thread */
   send_queue[n_queued_msgs] = msg;

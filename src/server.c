@@ -38,7 +38,7 @@ void *server_unit() {
   int sock_server, connection;
   int sin_size = sizeof(struct sockaddr_in);
   struct sockaddr_in server_addr, client_addr;
-  struct message *received_msg = NULL;
+  struct message received_msg;
 
   /* Starts listening for connections on default port */
   if ((sock_server = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -102,9 +102,9 @@ void *server_unit() {
     connection = accept(sock_server, (struct sockaddr *) &client_addr,
         (socklen_t *) &sin_size);
     printf("Client connected %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
-    bytes_recv = recv(connection, (void *) received_msg,
-        sizeof (struct message *), 0);
-    store_message(received_msg);
+    bytes_recv = recv(connection, (void *) &received_msg,
+        sizeof(received_msg), 0);
+    store_message(&received_msg);
   }
 
   /* Waits on barrier for all units to exit together */

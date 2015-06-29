@@ -99,12 +99,11 @@ void *server_unit() {
 
     /* Blocking accept waits for connection attempts */
     /* TODO: assign to connection */
-    fflush(stdout);
     connection = accept(sock_server, (struct sockaddr *) &client_addr,
         (socklen_t *) &sin_size);
     printf("Client connected %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
-    bytes_recv = recv(connection, received_msg, sizeof(struct message),
-        0);
+    bytes_recv = recv(connection, (void *) received_msg,
+        sizeof (struct message *), 0);
     store_message(received_msg);
   }
 

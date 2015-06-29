@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <pthread.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -9,11 +11,31 @@
 
 
 
+/* Internal functions for the server unit. */
+
+/* Stores a received message. */
+static int store_message(struct message *received_msg) {
+  /* TODO: replace this faux message with the actual message */
+  if (n_msgs == MAX_STORED_MSGS) {
+    return E_MESSAGE_STORAGE_FULL;
+  }
+
+  /* Updates message with the time it was received and stores it */
+  received_msg->time_received = time(NULL);
+  messages[n_msgs] = received_msg;
+  n_msgs++;
+  n_unread_msgs++;
+
+  return OK;
+}
+
+
+
 /* Server unit thread main function. */
 void *server_unit() {
   int rc;
   int true_int = 1;
-  int sock_server, connection, sin_size;
+  int sock_server, sin_size;
   struct sockaddr_in server_addr, client_addr;
 
   /* Starts listening for connections on default port */
@@ -45,6 +67,15 @@ void *server_unit() {
     pthread_exit((void *) E_CANT_LISTEN_SERVER_SOCKET);
   }
 
+  /* TODO: remove faux message below */
+  struct message *faux;
+  faux = (struct message *) malloc(sizeof(struct message));
+  faux->time_sent = time(NULL);
+  faux->read = 0;
+  faux->address = strndup("1.2.3.4", MAX_ADDRESS_SIZE);
+  faux->text = strndup("Welcome to redchat!", MAX_MESSAGE_SIZE);
+  store_message(faux);
+
   /* Waits on barrier for other units to load */
   debug(COLOR_YELLOW, "Server", "Waiting on barrier for units to load");
   rc = pthread_barrier_wait(&all_done);
@@ -61,9 +92,9 @@ void *server_unit() {
     debug(COLOR_YELLOW, "Server", "Waiting for connections");
 
     /* Blocking accept waits for connection attempts */
-    connection = accept(sock_server, (struct sockaddr *) &client_addr,
+    /* TODO: assign to connection */
+    accept(sock_server, (struct sockaddr *) &client_addr,
         (socklen_t *) &sin_size);
-    printf("Connection attempted\n");
   }
 
   /* Waits on barrier for all units to exit together */

@@ -19,6 +19,7 @@ int is_executing;
 int n_queued_msgs;
 int n_contacts;
 int n_msgs;
+int n_unread_msgs;
 
 int main(int argc, char **argv) {
   int rc;
@@ -28,6 +29,7 @@ int main(int argc, char **argv) {
   /* Initialize control variables */
   n_queued_msgs = 0;
   n_msgs = 0;
+  n_unread_msgs = 0;
   n_contacts = 0;
   is_executing = 1;
 

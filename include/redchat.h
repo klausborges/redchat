@@ -33,6 +33,8 @@
 #define E_CANT_SET_SERVER_SOCKOPTS  17
 #define E_CANT_BIND_SERVER_SOCKET   18
 #define E_CANT_LISTEN_SERVER_SOCKET 19
+#define E_INVALID_CONTACT_N         20
+#define E_MESSAGE_STORAGE_FULL      21
 
 /* String size constants. */
 #define MAX_OPTION_SIZE   2
@@ -40,6 +42,7 @@
 #define MAX_ADDRESS_SIZE  16
 #define MAX_MESSAGE_SIZE  128
 #define MAX_BUFFER_SIZE   512
+#define MAX_TIME_SIZE     8
 
 /* Status codes for contacts. */
 #define STATUS_UNKNOWN  0
@@ -69,6 +72,9 @@
 
 /* Struct containing the address and the message to be sent. */
 struct message {
+  time_t time_sent;
+  time_t time_received;
+  short read;
   char *address;
   char *text;
 };
@@ -91,6 +97,7 @@ extern int n_queued_msgs;
 /* Storage for received messages. */
 extern struct message *messages[];
 extern int n_msgs;
+extern int n_unread_msgs;
 
 /* Array to hold all contacts information. */
 extern struct contact *contacts[];

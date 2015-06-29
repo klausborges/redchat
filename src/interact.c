@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <pthread.h>
 #include "../include/redchat.h"
 #include "../include/utils.h"
@@ -15,8 +16,10 @@ static void print_menu() {
   printf("2. List contacts\n");
   printf("3. Remove contact\n");
   printf("4. Send message\n");
-  printf("5. Read messages (%d)\n", n_msgs);
-  printf("6. Exit\n");
+  printf("5. Send group message\n");
+  printf("6. Read all messages (%d)\n", n_msgs);
+  printf("7. Read unread messages (%d)\n", n_unread_msgs);
+  printf("8. Exit\n");
   printf("Option> ");
 }
 
@@ -119,6 +122,11 @@ static int queue_message() {
   strip(buffer, MAX_MESSAGE_SIZE);
   msg->text = strndup(buffer, MAX_MESSAGE_SIZE-1);
 
+  /* Sets send time and read status of the message */
+  msg->time_sent = time(NULL);
+  msg->read = FALSE;
+
+
   /* Queues message and signals the client thread */
   send_queue[n_queued_msgs] = msg;
   n_queued_msgs++;
@@ -128,6 +136,99 @@ static int queue_message() {
   free(buffer);
 
   return OK;
+}
+
+
+
+/* Removes the nth contact from the contact list. */
+static int remove_contact() {
+  char *buffer = NULL;
+
+  /* Allocates memory for buffer */
+  buffer = (char *) malloc(MAX_BUFFER_SIZE * sizeof(char));
+  if (!buffer) {
+    return E_CANT_ALLOC_BUFFER;
+  }
+
+  /* Reads input and strips newlines */
+  printf("\n  Number (n): ");
+  read_line(buffer, MAX_NAME_SIZE);
+  strip(buffer, MAX_NAME_SIZE);
+
+  /* Removes contact from contact list */
+
+
+  /* Frees allocated resources */
+  free(buffer);
+
+  return OK;
+}
+
+
+
+/* Lists all received messages and sets all unread to read. */
+static void print_all_messages() {
+  int i;
+
+  if (n_msgs == 0) {
+    printf("\n  No messages to show!\n\n");
+  }
+  else {
+    char buffer[10];
+    struct tm *time_received;
+
+    printf("\n  %*s %*s %s\n", MAX_TIME_SIZE, "Time", MAX_NAME_SIZE,
+        "From", "Message");
+    for (i = 0; i < n_msgs; i++) {
+      time_received = localtime(&messages[i]->time_received);
+      strftime(buffer, 10, "%T", time_received);
+      printf("  %*s %*s %s\n",
+          MAX_TIME_SIZE, buffer,
+          MAX_NAME_SIZE, messages[i]->address,
+          messages[i]->text);
+
+      /* Marks message as read */
+      if (messages[i]->read == FALSE) {
+        messages[i]->read = TRUE;
+        n_unread_msgs--;
+      }
+    }
+
+    /* Frees allocated resources */
+
+    printf("\n");
+  }
+}
+
+/* Lists unread received messages and sets them to read. */
+static void print_unread_messages() {
+  int i;
+
+  if (n_unread_msgs == 0) {
+    printf("\n  No unread messages to show!\n\n");
+  }
+  else {
+    char buffer[10];
+    struct tm *time_received;
+
+    printf("\n  %*s %*s %s\n", MAX_TIME_SIZE, "Time", MAX_NAME_SIZE,
+        "From", "Message");
+    for (i = 0; i < n_msgs; i++) {
+      if (messages[i]->read == FALSE) {
+        time_received = localtime(&messages[i]->time_received);
+        strftime(buffer, 10, "%T", time_received);
+        printf("  %*s %*s %s\n",
+            MAX_TIME_SIZE, buffer,
+            MAX_NAME_SIZE, messages[i]->address,
+            messages[i]->text);
+
+        /* Marks message as read */
+        messages[i]->read = TRUE;
+        n_unread_msgs--;
+      }
+    }
+    printf("\n");
+  }
 }
 
 
@@ -156,7 +257,7 @@ void *interactive_unit() {
   }
 
   /* Menu loop */
-  while (option != '6') {
+  while (option != '8') {
     print_menu();
 
     rc = read_line(buffer, MAX_OPTION_SIZE);
@@ -180,7 +281,17 @@ void *interactive_unit() {
         print_contacts();
       }
       else if (option == '3') {
-        printf("\nContact removed\n\n");
+        rc = remove_contact();
+        if (rc == OK) {
+          debug(COLOR_GREEN, "Interactive", "Contact removed");
+        }
+        else if (rc == E_CANT_ALLOC_BUFFER) {
+          debugerr(COLOR_GREEN, "Interactive", "Couldn't alloc removal buffer");
+          pthread_exit((void *) E_CANT_ALLOC_BUFFER);
+        }
+        else if (rc == E_INVALID_CONTACT_N) {
+          debugerr(COLOR_GREEN, "Interactive", "Invalid contact number");
+        }
       }
       else if (option == '4') {
         rc = queue_message();
@@ -197,9 +308,16 @@ void *interactive_unit() {
         }
       }
       else if (option == '5') {
-        printf("\nMessages read\n\n");
+        /* TODO */
       }
       else if (option == '6') {
+        print_all_messages();
+      }
+      else if (option == '7') {
+        print_unread_messages();
+      }
+      else if (option == '8') {
+        /* TODO: Signal other threads to free up resources and exit */
         printf("\n  Bye!\n\n");
       }
       else {

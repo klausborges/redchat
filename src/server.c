@@ -37,7 +37,6 @@ void *server_unit() {
   int true_int = 1;
   int sock_server;
   int sin_size = sizeof(struct sockaddr_in);
-
   struct sockaddr_in server_addr, client_addr;
 
   /* Starts listening for connections on default port */

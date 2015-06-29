@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -23,6 +24,7 @@ static int dispatch_message(struct message *msg) {
   int sock_client;
 
   /* Sets up the socket */
+  printf("Sending message to (%s)\n", msg->address);
   host = gethostbyname(msg->address);
 
   if ((sock_client = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -38,6 +40,7 @@ static int dispatch_message(struct message *msg) {
   if (connect(sock_client, (struct sockaddr *) &server_addr,
         sizeof(struct sockaddr)) == -1) {
     return E_DEST_SERVER_OFFLINE;
+    printf("ERROR: %d\n", errno);
   }
 
   /* Attempts to receive first packet */

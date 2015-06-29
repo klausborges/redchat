@@ -33,7 +33,7 @@ static int dispatch_message(struct message *msg) {
   }
 
   server_addr.sin_family = AF_INET;
-  server_addr.sin_port = DEFAULT_SERVER_PORT;
+  server_addr.sin_port = htons(DEFAULT_SERVER_PORT);
   server_addr.sin_addr = *((struct in_addr *)host->h_addr);
   bzero(&(server_addr.sin_zero), 8);
 

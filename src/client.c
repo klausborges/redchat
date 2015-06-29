@@ -19,6 +19,7 @@
 static int dispatch_message(struct message *msg) {
   struct sockaddr_in server_addr;
   struct hostent *host;
+  struct message *recv_data;
   int sock_client;
 
   /* Sets up the socket */
@@ -32,14 +33,15 @@ static int dispatch_message(struct message *msg) {
   server_addr.sin_port = DEFAULT_SERVER_PORT;
   server_addr.sin_addr = *((struct in_addr *)host->h_addr);
   bzero(&(server_addr.sin_zero), 8);
-  /* TODO: is this better?
-   * inet_pton(AF_INET, "ip_address", &(server_addr.sin_addr)); */
 
   /* Attempts a connection to destination server unit */
   if (connect(sock_client, (struct sockaddr *) &server_addr,
         sizeof(struct sockaddr)) == -1) {
     return E_DEST_SERVER_OFFLINE;
   }
+
+  /* Attempts to receive first packet */
+  recv(sock_client, (void *) &recv_data, sizeof(recv_data), 0);
 
   return OK;
 }

@@ -35,7 +35,9 @@ static int store_message(struct message *received_msg) {
 void *server_unit() {
   int rc;
   int true_int = 1;
-  int sock_server, sin_size;
+  int sock_server;
+  int sin_size = sizeof(struct sockaddr_in);
+
   struct sockaddr_in server_addr, client_addr;
 
   /* Starts listening for connections on default port */
@@ -67,6 +69,10 @@ void *server_unit() {
     pthread_exit((void *) E_CANT_LISTEN_SERVER_SOCKET);
   }
 
+  /* TODO: Remove this */
+  printf("Server listening on %s:%d\n", inet_ntoa(server_addr.sin_addr),
+      DEFAULT_SERVER_PORT);
+
   /* TODO: remove faux message below */
   struct message *faux;
   faux = (struct message *) malloc(sizeof(struct message));
@@ -95,6 +101,7 @@ void *server_unit() {
     /* TODO: assign to connection */
     accept(sock_server, (struct sockaddr *) &client_addr,
         (socklen_t *) &sin_size);
+    printf("Client connected %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
   }
 
   /* Waits on barrier for all units to exit together */

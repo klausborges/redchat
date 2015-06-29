@@ -18,6 +18,7 @@
 
 /* Dispatches queued messages to their recipients. */
 static int dispatch_message(struct message *msg) {
+  int rc;
   struct sockaddr_in server_addr;
   struct hostent *host;
   struct message *recv_data;
@@ -37,10 +38,11 @@ static int dispatch_message(struct message *msg) {
   bzero(&(server_addr.sin_zero), 8);
 
   /* Attempts a connection to destination server unit */
-  if (connect(sock_client, (struct sockaddr *) &server_addr,
-        sizeof(struct sockaddr)) == -1) {
-    return E_DEST_SERVER_OFFLINE;
+  rc = connect(sock_client, (struct sockaddr *) &server_addr,
+        sizeof(struct sockaddr));
+  if (rc == -1) {
     printf("ERROR: %d\n", errno);
+    return E_DEST_SERVER_OFFLINE;
   }
 
   /* Attempts to receive first packet */

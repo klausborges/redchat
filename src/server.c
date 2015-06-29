@@ -98,6 +98,7 @@ void *server_unit() {
 
     /* Blocking accept waits for connection attempts */
     /* TODO: assign to connection */
+    fflush(stdout);
     accept(sock_server, (struct sockaddr *) &client_addr,
         (socklen_t *) &sin_size);
     printf("Client connected %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));

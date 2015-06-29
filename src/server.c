@@ -15,14 +15,27 @@
 
 /* Stores a received message. */
 static int store_message(struct message *received_msg) {
-  /* TODO: replace this faux message with the actual message */
+  struct message *stored_msg = NULL;
+
   if (n_msgs == MAX_STORED_MSGS) {
     return E_MESSAGE_STORAGE_FULL;
   }
 
+  /* Allocates memory for the received message and copies data */
+  stored_msg = (struct message *) malloc(sizeof(struct message));
+  if (!stored_msg) {
+    return E_CANT_ALLOC_MESSAGE;
+  }
+
+  stored_msg->time_sent = received_msg->time_sent;
+  stored_msg->time_received = time(NULL);
+  stored_msg->read = received_msg->read;
+  stored_msg->src_addr = strndup(received_msg->src_addr, MAX_ADDRESS_SIZE);
+  stored_msg->dest_addr = strndup(received_msg->dest_addr, MAX_ADDRESS_SIZE);
+  stored_msg->text = strndup(received_msg->text, MAX_MESSAGE_SIZE);
+
   /* Updates message with the time it was received and stores it */
-  received_msg->time_received = time(NULL);
-  messages[n_msgs] = received_msg;
+  messages[n_msgs] = stored_msg;
   n_msgs++;
   n_unread_msgs++;
 

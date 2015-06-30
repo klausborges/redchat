@@ -115,6 +115,7 @@ void *server_unit() {
     printf("Client connected %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
     bytes_recv = recv(connection, (void *) &received_msg,
         sizeof(received_msg), 0);
+    printf("Received message! %s\n", received_msg.text);
     store_message(received_msg);
   }
 

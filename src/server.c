@@ -34,7 +34,10 @@ static int store_message(struct message received_msg, char *src_address) {
   stored_msg->time_received = time(NULL);
   stored_msg->read = FALSE;
   stored_msg->src_address = strndup(src_address, MAX_ADDRESS_SIZE);
-  stored_msg->text = strndup(received_msg.text, MAX_MESSAGE_SIZE);
+  /* Missing non terminated string here! Message is received but can't
+   * be passed!
+   * stored_msg->text = strndup(received_msg.text, MAX_MESSAGE_SIZE);
+   */
 
   /* Stores the message */
   messages[n_msgs] = stored_msg;

@@ -98,6 +98,7 @@ static int add_contact() {
  * client unit. */
 static int queue_message() {
   char *buffer = NULL;
+  int n;
   struct message *msg = NULL;
 
   /* Allocates memory for buffer and message struct */
@@ -112,12 +113,17 @@ static int queue_message() {
   }
 
   /* Reads input and strips newlines */
-  printf("\n   Target: ");
+  printf("\n  Number (n): ");
   read_line(buffer, MAX_NAME_SIZE);
-  strip(buffer, MAX_NAME_SIZE);
-  msg->dest_address = strndup(buffer, MAX_NAME_SIZE-1);
+  sscanf(buffer, "%d", &n);
 
-  printf("  Message: ");
+  /* Looks for contact in contacts list */
+  if (n >= n_contacts) {
+    return E_INVALID_CONTACT_N;
+  }
+  msg->dest_address = strndup(contacts[n]->address, MAX_NAME_SIZE);
+
+  printf("     Message: ");
   read_line(buffer, MAX_MESSAGE_SIZE);
   strip(buffer, MAX_MESSAGE_SIZE);
   msg->text = strndup(buffer, MAX_MESSAGE_SIZE-1);
@@ -294,6 +300,9 @@ void *interactive_unit() {
         else if (rc == E_CANT_ALLOC_MESSAGE) {
           debugerr(COLOR_GREEN, "Interactive", "Couldn't alloc message struct");
           pthread_exit((void *) E_CANT_ALLOC_MESSAGE);
+        }
+        else if (rc == E_INVALID_CONTACT_N) {
+          printf("\n  Invalid contact number!\n\n");
         }
       }
       else if (option == '5') {

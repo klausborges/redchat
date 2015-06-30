@@ -115,15 +115,15 @@ static int queue_message() {
   printf("\n   Target: ");
   read_line(buffer, MAX_NAME_SIZE);
   strip(buffer, MAX_NAME_SIZE);
-  msg->dest_addr = strndup(buffer, MAX_NAME_SIZE-1);
+  msg->dest_address = strndup(buffer, MAX_NAME_SIZE-1);
 
   printf("  Message: ");
   read_line(buffer, MAX_MESSAGE_SIZE);
   strip(buffer, MAX_MESSAGE_SIZE);
   msg->text = strndup(buffer, MAX_MESSAGE_SIZE-1);
 
-  /* Sets send time and read status of the message */
   msg->time_sent = time(NULL);
+  msg->type = MSG_TYPE_TEXT;
 
   /* Queues message and signals the client thread */
   send_queue[n_queued_msgs] = msg;
@@ -153,8 +153,6 @@ static int remove_contact() {
   read_line(buffer, MAX_NAME_SIZE);
   strip(buffer, MAX_NAME_SIZE);
 
-  /* Removes contact from contact list */
-
   /* Frees allocated resources */
   free(buffer);
 
@@ -179,10 +177,8 @@ static void print_all_messages() {
     for (i = 0; i < n_msgs; i++) {
       time_received = localtime(&messages[i]->time_received);
       strftime(buffer, 10, "%T", time_received);
-      printf("  %*s %*s %s\n",
-          MAX_TIME_SIZE, buffer,
-          MAX_NAME_SIZE, messages[i]->src_addr,
-          messages[i]->text);
+      printf("  %*s %*s %s\n", MAX_TIME_SIZE, buffer, MAX_NAME_SIZE,
+          messages[i]->src_address, messages[i]->text);
 
       /* Marks message as read */
       if (messages[i]->read == FALSE) {
@@ -190,8 +186,6 @@ static void print_all_messages() {
         n_unread_msgs--;
       }
     }
-
-    /* Frees allocated resources */
 
     printf("\n");
   }
@@ -214,10 +208,8 @@ static void print_unread_messages() {
       if (messages[i]->read == FALSE) {
         time_received = localtime(&messages[i]->time_received);
         strftime(buffer, 10, "%T", time_received);
-        printf("  %*s %*s %s\n",
-            MAX_TIME_SIZE, buffer,
-            MAX_NAME_SIZE, messages[i]->src_addr,
-            messages[i]->text);
+        printf("  %*s %*s %s\n", MAX_TIME_SIZE, buffer, MAX_NAME_SIZE,
+            messages[i]->src_address, messages[i]->text);
 
         /* Marks message as read */
         messages[i]->read = TRUE;
@@ -305,7 +297,7 @@ void *interactive_unit() {
         }
       }
       else if (option == '5') {
-        /* TODO */
+
       }
       else if (option == '6') {
         print_all_messages();
@@ -314,7 +306,6 @@ void *interactive_unit() {
         print_unread_messages();
       }
       else if (option == '8') {
-        /* TODO: Signal other threads to free up resources and exit */
         printf("\n  Bye!\n\n");
       }
       else {
@@ -327,7 +318,6 @@ void *interactive_unit() {
   debug(COLOR_GREEN, "Interactive", "Freeing resources");
   free(buffer);
 
-  /* TODO: mutual exclusion on global variable */
   is_executing = 0;
   sem_post(&queued_msgs);
 

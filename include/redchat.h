@@ -68,19 +68,36 @@
 /* Default number of maximum pending connections on server socket. */
 #define MAX_PENDING_CONNECTIONS 5
 
+/* Message types. */
+#define MSG_TYPE_TEXT 0
+#define MSG_TYPE_SYS  1
 
 
-/* Struct containing the address and the message to be sent. */
+
+/* Struct containing the message to be sent.
+ * time_sent: time of dispatching
+ * type: type of the message (MSG_TYPE_TEXT or MSG_TYPE_SYS)
+ * dest_address: destination address
+ * text: message body or details for system type messages */
 struct message {
   time_t time_sent;
-  time_t time_received;
-  short read;
-  char *src_addr;
-  char *dest_addr;
+  short type;
+  char *dest_address;
   char *text;
 };
 
-/* Struct containing the target address (online/offline). */
+/* Struct containing the message to be stored after being received,
+ * with extra fields that do not need to be sent over the network. */
+struct stored_message {
+  time_t time_sent;
+  time_t time_received;
+  char *src_address;
+  char *text;
+  short read;
+};
+
+/* Struct containing contact information, such as the address, an
+ * alias and the online/offline status. */
 struct contact {
   char *address;
   char *alias;
@@ -96,7 +113,7 @@ extern struct message *send_queue[];
 extern int n_queued_msgs;
 
 /* Storage for received messages. */
-extern struct message *messages[];
+extern struct stored_message *messages[];
 extern int n_msgs;
 extern int n_unread_msgs;
 

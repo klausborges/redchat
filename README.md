@@ -4,9 +4,8 @@ redchat
 Simple chat console application made as an assignment for the Computer
 Networking class at University of São Paulo, São Carlos campus.
 
-This project attempts to show socket programming in C with the
-concepts of sockets and TCP learned, mixed with threads from the
-Operating Systems class.
+The application aims to demonstrate concepts learned in class, such as
+the peer-to-peer (P2P) architecture, sockets, and TCP.
 
 Dependencies
 ------------
@@ -35,13 +34,12 @@ Usage
 -----
 
 A menu is presented when running the application, just browse through
-the options. It's pretty straight-forward.
+the options.
 
 To do
 -----
 
-This list. Also, a lot of improvements need to be made regarding
-mutual exclusion.
+* [ ] Better mutual exclusion handling
 
 License
 -------

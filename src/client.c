@@ -24,7 +24,7 @@ static int dispatch_message(struct message *send_msg) {
   int sock_client;
 
   /* Sets up the socket */
-  host = gethostbyname(send_msg->dest_addr);
+  host = gethostbyname(send_msg->dest_address);
 
   if ((sock_client = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
     return E_CANT_CREATE_SOCKET;
@@ -39,12 +39,14 @@ static int dispatch_message(struct message *send_msg) {
   rc = connect(sock_client, (struct sockaddr *) &server_addr,
         sizeof(struct sockaddr));
   if (rc == -1) {
-    printf("ERROR: %d\n", errno);
     return E_DEST_SERVER_OFFLINE;
   }
 
   /* Sends the message */
   send(sock_client, (void *) send_msg, sizeof(send_msg), 0);
+
+  /* Closes the socket */
+  close(sock_client);
 
   return OK;
 }
@@ -88,18 +90,16 @@ void *client_unit() {
       }
       else if (rc == E_DEST_SERVER_OFFLINE) {
         debugerr(COLOR_RED, "Client", "Destination server not found");
-        /* TODO: Mark contact as offline, remove contact, retry sending msg? */
       }
 
       /* Frees dispatched message resources */
-      free(deliver->dest_addr);
+      free(deliver->dest_address);
       free(deliver->text);
       free(deliver);
       n_queued_msgs--;
     }
     else if (!is_executing) {
       debug(COLOR_RED, "Client", "Received termination signal");
-      /* TODO: Free queued messages and exit? */
     }
     else {
       debugerr(COLOR_RED, "Client", "Post on semaphore with empty queue");

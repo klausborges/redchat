@@ -12,7 +12,7 @@ pthread_barrier_t all_done;
 sem_t queued_msgs;
 
 struct message *send_queue[MAX_QUEUED_MSGS];
-struct message *messages[MAX_STORED_MSGS];
+struct stored_message *messages[MAX_STORED_MSGS];
 struct contact *contacts[MAX_N_CONTACTS];
 
 int is_executing;

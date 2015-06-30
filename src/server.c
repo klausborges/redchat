@@ -14,7 +14,7 @@
 /* Internal functions for the server unit. */
 
 /* Stores a received message. */
-static int store_message(struct message *received_msg) {
+static int store_message(struct message received_msg) {
   struct message *stored_msg = NULL;
 
   if (n_msgs == MAX_STORED_MSGS) {
@@ -27,11 +27,11 @@ static int store_message(struct message *received_msg) {
     return E_CANT_ALLOC_MESSAGE;
   }
 
-  stored_msg->time_sent = received_msg->time_sent;
+  stored_msg->time_sent = received_msg.time_sent;
   stored_msg->time_received = time(NULL);
   stored_msg->read = FALSE;
-  stored_msg->src_addr = strndup(received_msg->dest_addr, MAX_ADDRESS_SIZE-1);
-  stored_msg->text = strndup(received_msg->text, MAX_MESSAGE_SIZE-1);
+  stored_msg->src_addr = strndup(received_msg.dest_addr, MAX_ADDRESS_SIZE-1);
+  stored_msg->text = strndup(received_msg.text, MAX_MESSAGE_SIZE-1);
 
   /* Updates message with the time it was received and stores it */
   messages[n_msgs] = stored_msg;
@@ -86,12 +86,11 @@ void *server_unit() {
       DEFAULT_SERVER_PORT);
 
   /* TODO: remove faux message below */
-  struct message *faux;
-  faux = (struct message *) malloc(sizeof(struct message));
-  faux->time_sent = time(NULL);
-  faux->read = 0;
-  faux->dest_addr = strndup("1.2.3.4", MAX_ADDRESS_SIZE);
-  faux->text = strndup("Welcome to redchat!", MAX_MESSAGE_SIZE);
+  struct message faux;
+  faux.time_sent = time(NULL);
+  faux.read = 0;
+  faux.dest_addr = strndup("1.2.3.4", MAX_ADDRESS_SIZE);
+  faux.text = strndup("Welcome to redchat!", MAX_MESSAGE_SIZE);
   store_message(faux);
 
   /* Waits on barrier for other units to load */
@@ -116,7 +115,7 @@ void *server_unit() {
     printf("Client connected %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
     bytes_recv = recv(connection, (void *) &received_msg,
         sizeof(received_msg), 0);
-    store_message(&received_msg);
+    store_message(received_msg);
   }
 
   /* Waits on barrier for all units to exit together */

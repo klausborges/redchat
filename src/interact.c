@@ -155,7 +155,6 @@ static int remove_contact() {
 
   /* Removes contact from contact list */
 
-
   /* Frees allocated resources */
   free(buffer);
 

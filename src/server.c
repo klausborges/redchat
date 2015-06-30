@@ -90,14 +90,6 @@ void *server_unit() {
     pthread_exit((void *) E_CANT_LISTEN_SERVER_SOCKET);
   }
 
-  /* TODO: Maybe remove welcome message? */
-  struct message welcome;
-  welcome.time_sent = time(NULL);
-  welcome.type = MSG_TYPE_TEXT;
-  welcome.dest_address = strndup("0.0.0.0", MAX_ADDRESS_SIZE);
-  welcome.text = strndup("Welcome to redchat!", MAX_MESSAGE_SIZE);
-  store_message(welcome, "0.0.0.0");
-
   /* Waits on barrier for other units to load */
   debug(COLOR_YELLOW, "Server", "Waiting on barrier for units to load");
   rc = pthread_barrier_wait(&all_done);

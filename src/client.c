@@ -17,15 +17,14 @@
 /* Internal functions for the client unit. */
 
 /* Dispatches queued messages to their recipients. */
-static int dispatch_message(struct message *msg) {
+static int dispatch_message(struct message *send_msg) {
   int rc;
   struct sockaddr_in server_addr;
   struct hostent *host;
   int sock_client;
 
   /* Sets up the socket */
-  printf("Sending message to (%s)\n", msg->dest_addr);
-  host = gethostbyname(msg->dest_addr);
+  host = gethostbyname(send_msg->dest_addr);
 
   if ((sock_client = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
     return E_CANT_CREATE_SOCKET;
@@ -45,7 +44,7 @@ static int dispatch_message(struct message *msg) {
   }
 
   /* Sends the message */
-  send(sock_client, msg, sizeof(struct message), 0);
+  send(sock_client, (void *) send_msg, sizeof(send_msg), 0);
 
   return OK;
 }

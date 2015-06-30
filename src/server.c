@@ -30,8 +30,8 @@ static int store_message(struct message *received_msg) {
   stored_msg->time_sent = received_msg->time_sent;
   stored_msg->time_received = time(NULL);
   stored_msg->read = FALSE;
-  stored_msg->src_addr = strndup(received_msg->dest_addr, MAX_ADDRESS_SIZE);
-  stored_msg->text = strndup(received_msg->text, MAX_MESSAGE_SIZE);
+  stored_msg->src_addr = strndup(received_msg->dest_addr, MAX_ADDRESS_SIZE-1);
+  stored_msg->text = strndup(received_msg->text, MAX_MESSAGE_SIZE-1);
 
   /* Updates message with the time it was received and stores it */
   messages[n_msgs] = stored_msg;

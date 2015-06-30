@@ -38,11 +38,11 @@
 
 /* String size constants. */
 #define MAX_OPTION_SIZE   2
+#define MAX_TIME_SIZE     8
 #define MAX_NAME_SIZE     16
 #define MAX_ADDRESS_SIZE  16
-#define MAX_MESSAGE_SIZE  128
-#define MAX_BUFFER_SIZE   512
-#define MAX_TIME_SIZE     8
+#define MAX_MESSAGE_SIZE  64
+#define MAX_BUFFER_SIZE   64
 
 /* Status codes for contacts. */
 #define STATUS_UNKNOWN  0

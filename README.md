@@ -40,6 +40,7 @@ To do
 -----
 
 * [ ] Better mutual exclusion handling
+* [ ] Clean up mostly everything
 
 License
 -------

@@ -10,7 +10,7 @@ the peer-to-peer (P2P) architecture, sockets, and TCP.
 Dependencies
 ------------
 
-GNU build essentials `gcc` and `make`.
+Build essentials are `gcc` and `make`.
 
 Building
 --------
